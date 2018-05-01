@@ -90,6 +90,9 @@ if __name__ == "__main__":
                     pop0[i,-ii:]=0
                     mfit[i]-=dx*ii
 
+        if any(N==0):
+            print("initial population extinct")
+            continue
         init_ratio = np.log(N[1]/N[0])
         dmfit = mfit[1] - mfit[0]
         ssq_init = [variance(pop0[i])[0] for i in [0,1]]
@@ -99,8 +102,8 @@ if __name__ == "__main__":
             mfit_list = [[],[]]
             pop = pop0.copy()
             mfit[:] = 0
-            one_extinct=0
-            both_extinct=0
+            one_extinct = "--"
+            both_extinct = "--"
             # the actual simulation
             for t in xrange(args.trun):
                 for i in [0,1]:
@@ -121,18 +124,18 @@ if __name__ == "__main__":
                         pop[i,-ii:]=0
                         mfit[i]-=dx*ii
 
-                if any(N==0) and one_extinct:
+                if any(N==0) and one_extinct=="--":
                     one_extinct = t if N[0] else -t
-                if all(N==0) and both_extinct:
+                if all(N==0) and both_extinct=="--":
                     both_extinct=t
                     break
 
             t_ext.append((init_ratio, dmfit, ssq_init[0], ssq_init[1],
-                          nose_pos_init[0], nose_pos_init[1], one_extinct, both_extinct))
+                          nose_pos_init[0], nose_pos_init[1], str(one_extinct), str(both_extinct)))
 
 
     with open('data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f.dat'%(N0,s,mut,t_cross), 'w') as ofile:
         ofile.write('#log(N2/N1), dmfit, var1, var2, nose1, nose2, first extinction, second extinction\n')
         for a in t_ext:
-            ofile.write("%f, %f, %f, %f, %f, %f, %d, %d\n"%a)
+            ofile.write("%f, %f, %f, %f, %f, %f, %s, %s\n"%a)
 
