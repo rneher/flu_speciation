@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy.special import airy
+import sys
 plt.ion()
 
 
@@ -42,10 +43,10 @@ def corrfunc(a,b, tmax, both=True):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser("model divergence between cross-immune pathogen populations")
-    # parser.add_argument("--lnNs", "log of Ns")
-    # parser.add_argument("--lnsu", "log of s/u")
-    parser.add_argument("-s", type=float, default=0.01, help="selection coefficient")
+    parser.add_argument("-s", type=float, default=None, help="selection coefficient")
     parser.add_argument("-u", type=float, default=3e-3, help="mutation rate")
+    parser.add_argument("--logNs", type=float, default=6, help="log Ns")
+    parser.add_argument("--logsou", type=float, default=2, help="log s over mu")
     parser.add_argument("--N0", type=float, default=1e9, help="census population size")
     parser.add_argument("--nrep", type=int, default=3, help="repetitions with same burnin")
     parser.add_argument("--niter", type=int, default=3, help="iteration with separate burnin")
@@ -57,12 +58,20 @@ if __name__ == "__main__":
     # s = 1.0/cross
     # mut = s*np.exp(-args.lnsu)
     # N0 = np.exp(lnNs)/s**2
-    s=args.s
-    mut=args.u
-    n=int(1.0/s)*2
     N0 = args.N0
     t_cross = args.cross
+    if args.s:
+        s=args.s
+        mut=args.u
+    else:
+        s = np.exp(args.logNs)/N0*t_cross**2
+        mut = np.exp(-args.logsou)*s
 
+    if s<1e-3 or s>0.2 or u>0.05:
+        print("out of range")
+        sys.exit(0)
+
+    n=int(1.0/s)*2
     fmax = 1.0
     fitgrid = np.linspace(-fmax,fmax,n+1)
     dx = fitgrid[1]-fitgrid[0]
@@ -94,6 +103,7 @@ if __name__ == "__main__":
             print("initial population extinct")
             continue
         init_ratio = np.log(N[1]/N[0])
+        init_N = N.mean()
         dmfit = mfit[1] - mfit[0]
         ssq_init = [variance(pop0[i])[0] for i in [0,1]]
         nose_pos_init = [np.max((pop0[i]>0)*fitgrid) for i in [0,1]]
@@ -130,12 +140,16 @@ if __name__ == "__main__":
                     both_extinct=t
                     break
 
-            t_ext.append((init_ratio, dmfit, ssq_init[0], ssq_init[1],
+            t_ext.append((init_N, init_ratio, dmfit, ssq_init[0], ssq_init[1],
                           nose_pos_init[0], nose_pos_init[1], str(one_extinct), str(both_extinct)))
 
 
-    with open('data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f.dat'%(N0,s,mut,t_cross), 'w') as ofile:
-        ofile.write('#log(N2/N1), dmfit, var1, var2, nose1, nose2, first extinction, second extinction\n')
-        for a in t_ext:
-            ofile.write("%f, %f, %f, %f, %f, %f, %s, %s\n"%a)
+    if args.s:
+        fname = 'data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f.dat'%(N0,s,mut,t_cross)
+    else:
+        fname = 'data/two_pop_N0_%1.1e_logNs_%f_logsou_%f_tc_%f.dat'%(N0,args.logNs,args.logsou,t_cross)
 
+    with open(fname, 'w') as ofile:
+        ofile.write('#N, log(N2/N1), dmfit, var1, var2, nose1, nose2, first extinction, second extinction\n')
+        for a in t_ext:
+            ofile.write("%f, %f, %f, %f, %f, %f, %f, %s, %s\n"%a)
