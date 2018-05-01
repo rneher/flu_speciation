@@ -44,7 +44,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser("model divergence between cross-immune pathogen populations")
     parser.add_argument("-s", type=float, default=None, help="selection coefficient")
-    parser.add_argument("-u", type=float, default=3e-3, help="mutation rate")
+    parser.add_argument("-u", type=float, default=None, help="mutation rate")
     parser.add_argument("--logsou", type=float, default=2, help="log s over mu")
     parser.add_argument("--N0", type=float, default=1e9, help="census population size")
     parser.add_argument("--nrep", type=int, default=3, help="repetitions with same burnin")
@@ -143,10 +143,10 @@ if __name__ == "__main__":
                           nose_pos_init[0], nose_pos_init[1], str(one_extinct), str(both_extinct)))
 
 
-    if args.s:
+    if args.u:
         fname = 'data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f.dat'%(N0,s,mut,t_cross)
     else:
-        fname = 'data/two_pop_N0_%1.1e_logNs_%f_logsou_%f_tc_%f.dat'%(N0,args.logNs,args.logsou,t_cross)
+        fname = 'data/two_pop_N0_%1.1e_s_%f_logsou_%f_tc_%f.dat'%(N0,s,args.logsou,t_cross)
 
     with open(fname, 'w') as ofile:
         ofile.write('#N, log(N2/N1), dmfit, var1, var2, nose1, nose2, first extinction, second extinction\n')
