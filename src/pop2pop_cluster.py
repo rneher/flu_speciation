@@ -45,7 +45,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("model divergence between cross-immune pathogen populations")
     parser.add_argument("-s", type=float, default=None, help="selection coefficient")
     parser.add_argument("-u", type=float, default=3e-3, help="mutation rate")
-    parser.add_argument("--logNs", type=float, default=6, help="log Ns")
     parser.add_argument("--logsou", type=float, default=2, help="log s over mu")
     parser.add_argument("--N0", type=float, default=1e9, help="census population size")
     parser.add_argument("--nrep", type=int, default=3, help="repetitions with same burnin")
@@ -60,15 +59,15 @@ if __name__ == "__main__":
     # N0 = np.exp(lnNs)/s**2
     N0 = args.N0
     t_cross = args.cross
-    if args.s:
+    if args.u:
         s=args.s
         mut=args.u
     else:
-        s = np.exp(args.logNs)/N0*t_cross**2
+        s=args.s
         mut = np.exp(-args.logsou)*s
 
-    if s<1e-3 or s>0.2 or u>0.05:
-        print("out of range")
+    if s<1e-3 or s>0.2 or mut>0.05:
+        print("out of range", s,mut)
         sys.exit(0)
 
     n=int(1.0/s)*2
