@@ -70,6 +70,13 @@ if __name__ == "__main__":
         print("out of range", s,mut)
         sys.exit(0)
 
+    if args.u:
+        fname = 'data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f.dat'%(N0,s,mut,t_cross)
+        fname_traj = 'data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f_traj.npy'%(N0,s,mut,t_cross)
+    else:
+        fname = 'data/two_pop_N0_%1.1e_s_%f_logsou_%f_tc_%f.dat'%(N0,s,args.logsou,t_cross)
+        fname_traj = 'data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f_traj.npy'%(N0,s,mut,t_cross)
+
     n=int(1.0/s)*2
     fmax = 1.0
     fitgrid = np.linspace(-fmax,fmax,n+1)
@@ -80,6 +87,7 @@ if __name__ == "__main__":
 
     t_burn = args.tburn
     t_ext = []
+    trajectories = []
     for nii in range(args.niter):
         # set up initial condition for niter separate runs
         for i in [0,1]:
@@ -121,10 +129,11 @@ if __name__ == "__main__":
 
                 mfit[0] += (N[0]+N[1]*np.exp(-1.0*t/t_cross))/N0
                 mfit[1] += (N[1]+N[0]*np.exp(-1.0*t/t_cross))/N0
-                for i in [0,1]:
-                    ssq, avg = variance(pop[i])
-                    nose_pos = np.max((pop[i]>0)*fitgrid)
-                    mfit_list[i].append([mfit[i], avg, N[i], ssq, nose_pos-avg])
+                if t%25==0:
+                    for i in [0,1]:
+                        ssq, avg = variance(pop[i])
+                        nose_pos = np.max((pop[i]>0)*fitgrid)
+                        mfit_list[i].append([t, mfit[i], avg, N[i], ssq, nose_pos-avg])
 
                 if np.max(mfit)>dx:
                     ii = int(np.max(mfit)/dx)
@@ -138,15 +147,12 @@ if __name__ == "__main__":
                 if all(N==0) and both_extinct=="--":
                     both_extinct=t
                     break
+            trajectories.append(np.array(mfit_list))
 
             t_ext.append((init_N, init_ratio, dmfit, ssq_init[0], ssq_init[1],
                           nose_pos_init[0], nose_pos_init[1], str(one_extinct), str(both_extinct)))
 
-
-    if args.u:
-        fname = 'data/two_pop_N0_%1.1e_s_%f_u_%f_tc_%f.dat'%(N0,s,mut,t_cross)
-    else:
-        fname = 'data/two_pop_N0_%1.1e_s_%f_logsou_%f_tc_%f.dat'%(N0,s,args.logsou,t_cross)
+    np.save(fname_traj, trajectories)
 
     with open(fname, 'w') as ofile:
         ofile.write('#N, log(N2/N1), dmfit, var1, var2, nose1, nose2, first extinction, second extinction\n')
