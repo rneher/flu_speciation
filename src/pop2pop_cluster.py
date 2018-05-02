@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # s = 1.0/cross
     # mut = s*np.exp(-args.lnsu)
     # N0 = np.exp(lnNs)/s**2
-    N0 = args.N0
+    N0 = args.N0/args.s**2
     t_cross = args.cross
     if args.u:
         s=args.s
